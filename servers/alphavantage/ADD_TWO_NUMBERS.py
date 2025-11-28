@@ -5,12 +5,14 @@ from servers.mcp_client import call_mcp_tool
 def ADD_TWO_NUMBERS(params: dict = None) -> dict:
     """
     Add two numbers together.
-    
+
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            a (required, integer): Parameter a
+            b (required, integer): Parameter b
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

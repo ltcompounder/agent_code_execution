@@ -4,30 +4,21 @@ from servers.mcp_client import call_mcp_tool
 
 def TIME_SERIES_INTRADAY(params: dict = None) -> dict:
     """
-    
-Returns current and 20+ years of historical intraday OHLCV time series of the equity specified.
+    Returns current and 20+ years of historical intraday OHLCV time series of the equity specified.
 
-Args:
-    symbol: The name of the equity. For example: symbol=IBM
-    interval: Time interval between consecutive data points. Supported: 1min, 5min, 15min, 30min, 60min
-    adjusted: By default True. Set False to query raw (as-traded) intraday values
-    extended_hours: By default True. Set False for regular trading hours only
-    month: Query specific month in YYYY-MM format. Example: 2009-01
-    outputsize: "compact" (100 data points) or "full" (30 days or full month)
-    datatype: By default, datatype=csv. Strings json and csv are accepted with the following specifications:
-             json returns the data in JSON format; csv returns the data as a CSV (comma separated value) file.
-
-
-        entitlement: "delayed" for 15-minute delayed data, "realtime" for realtime data
-Returns:
-    Dict or string containing the time series data based on datatype parameter.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            symbol (required, string): The name of the equity. For example: symbol=IBM
+            interval (required, string): Time interval between consecutive data points. Supported: 1min, 5min, 15min, 30min, 60min
+            adjusted (optional, boolean): By default True. Set False to query raw (as-traded) intraday values
+            extended_hours (optional, boolean): By default True. Set False for regular trading hours only
+            month (optional, string): Query specific month in YYYY-MM format. Example: 2009-01
+            outputsize (optional, string): "compact" (100 data points) or "full" (30 days or full month)
+            datatype (optional, string): By default, datatype=csv. Strings json and csv are accepted with the following specifications:
+            entitlement (optional, string): "delayed" for 15-minute delayed data, "realtime" for realtime data
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

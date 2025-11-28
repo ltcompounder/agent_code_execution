@@ -4,25 +4,16 @@ from servers.mcp_client import call_mcp_tool
 
 def TIME_SERIES_WEEKLY(params: dict = None) -> dict:
     """
-    
-Returns weekly time series (last trading day of each week, OHLCV) covering 20+ years of historical data.
+    Returns weekly time series (last trading day of each week, OHLCV) covering 20+ years of historical data.
 
-Args:
-    symbol: The name of the equity. For example: symbol=IBM
-    datatype: By default, datatype=csv. Strings json and csv are accepted with the following specifications:
-             json returns the data in JSON format; csv returns the data as a CSV (comma separated value) file.
-
-
-        entitlement: "delayed" for 15-minute delayed data, "realtime" for realtime data
-Returns:
-    Dict or string containing the weekly time series data based on datatype parameter.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            symbol (required, string): The name of the equity. For example: symbol=IBM
+            datatype (optional, string): By default, datatype=csv. Strings json and csv are accepted with the following specifications:
+            entitlement (optional, string): "delayed" for 15-minute delayed data, "realtime" for realtime data
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

@@ -6,20 +6,12 @@ def EARNINGS_ESTIMATES(params: dict = None) -> dict:
     """
     Returns annual and quarterly EPS and revenue estimates with analyst data.
 
-Includes analyst count and revision history.
-
-Args:
-    symbol: The symbol of the ticker of your choice. For example: symbol=IBM.
-
-Returns:
-    Earnings estimates data in JSON format or error message.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            symbol (required, string): The symbol of the ticker of your choice. For example: symbol=IBM.
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

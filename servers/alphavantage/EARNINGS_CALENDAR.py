@@ -6,21 +6,13 @@ def EARNINGS_CALENDAR(params: dict = None) -> dict:
     """
     Returns a list of company earnings expected in the next 3, 6, or 12 months.
 
-Args:
-    symbol: By default, no symbol is set and returns full list of scheduled earnings.
-           If set, returns expected earnings for that specific symbol. For example: symbol=IBM
-    horizon: By default, horizon=3month returns earnings in the next 3 months.
-            Set horizon=6month or horizon=12month for 6 or 12 months respectively.
-
-Returns:
-    Earnings calendar data in CSV format or error message.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            symbol (optional, string): By default, no symbol is set and returns full list of scheduled earnings.
+            horizon (optional, string): By default, horizon=3month returns earnings in the next 3 months.
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

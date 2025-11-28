@@ -30,10 +30,10 @@ def generate_tool_file(tool: dict) -> str:
         param_type = param_info.get("type", "any")
         param_desc = param_info.get("description", "")
         is_required = "required" if param_name in required else "optional"
-        param_docs.append(f"        {param_name} ({is_required}, {param_type}): {param_desc}")
-    
-    #params_doc = "\n".join(param_docs) if param_docs else "        No parameters"
-    
+        param_docs.append(f"            {param_name} ({is_required}, {param_type}): {param_desc}")
+
+    params_doc = "\n".join(param_docs) if param_docs else "            No parameters required"
+
     code = f'''
 from servers.mcp_client import call_mcp_tool
 
@@ -41,12 +41,13 @@ from servers.mcp_client import call_mcp_tool
 def {tool_name}(params: dict = None) -> dict:
     """
     {description}
-    
+
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+{params_doc}
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {{}}

@@ -4,21 +4,14 @@ from servers.mcp_client import call_mcp_tool
 
 def FETCH(params: dict = None) -> dict:
     """
-    
-Fetch complete financial data by calling the specified Alpha Vantage API function.
+    Fetch complete financial data by calling the specified Alpha Vantage API function.
 
-Args:
-    id: Alpha Vantage API function name (from search results)
-
-Returns:
-    Complete data response with id, title, full data content, URL, and metadata
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            id (required, string): Alpha Vantage API function name (from search results)
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

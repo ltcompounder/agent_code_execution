@@ -6,20 +6,12 @@ def INSIDER_TRANSACTIONS(params: dict = None) -> dict:
     """
     Returns latest and historical insider transactions by key stakeholders.
 
-Covers transactions by founders, executives, board members, etc.
-
-Args:
-    symbol: Ticker symbol. Example: "IBM".
-    
-Returns:
-    Dictionary containing insider transaction data or JSON string.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            symbol (required, string): Ticker symbol. Example: "IBM".
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

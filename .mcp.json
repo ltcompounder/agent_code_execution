@@ -1,0 +1,36 @@
+{
+  "mcpServers": {
+    "alphavantage": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic/mcp-server-alphavantage"
+      ],
+      "env": {
+        "ALPHA_VANTAGE_API_KEY": "${ALPHA_VANTAGE_API_KEY}"
+      }
+    }
+  },
+  "mcpClients": {
+    "research-agent": {
+      "description": "Multi-agent financial data analysis system using MCP code execution pattern",
+      "command": "python",
+      "args": [
+        "agent_multi_stage.py"
+      ],
+      "env": {
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+        "ALPHA_VANTAGE_API_KEY": "${ALPHA_VANTAGE_API_KEY}"
+      }
+    }
+  },
+  "remoteServers": {
+    "alphavantage-https": {
+      "url": "https://mcp.alphavantage.co/mcp",
+      "apiKeyParam": "apikey",
+      "env": {
+        "ALPHA_VANTAGE_API_KEY": "${ALPHA_VANTAGE_API_KEY}"
+      }
+    }
+  }
+}

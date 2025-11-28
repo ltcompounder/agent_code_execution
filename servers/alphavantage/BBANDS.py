@@ -6,38 +6,21 @@ def BBANDS(params: dict = None) -> dict:
     """
     Returns the Bollinger bands (BBANDS) values.
 
-Args:
-    symbol: The name of the ticker of your choice. For example: symbol=IBM
-    interval: Time interval between two consecutive data points in the time series.
-             The following values are supported: 1min, 5min, 15min, 30min, 60min, daily, weekly, monthly
-    time_period: Number of data points used to calculate each BBANDS value. Positive integers are accepted.
-    series_type: The desired price type in the time series. Four types are supported: close, open, high, low
-    nbdevup: The standard deviation multiplier of the upper band. Positive integers are accepted. By default, nbdevup=2.
-    nbdevdn: The standard deviation multiplier of the lower band. Positive integers are accepted. By default, nbdevdn=2.
-    matype: Moving average type of the time series. By default, matype=0. Integers 0-8 are accepted with the following mappings:
-           0 = Simple Moving Average (SMA), 1 = Exponential Moving Average (EMA), 2 = Weighted Moving Average (WMA),
-           3 = Double Exponential Moving Average (DEMA), 4 = Triple Exponential Moving Average (TEMA),
-           5 = Triangular Moving Average (TRIMA), 6 = T3 Moving Average, 7 = Kaufman Adaptive Moving Average (KAMA),
-           8 = MESA Adaptive Moving Average (MAMA).
-    month: Note: this parameter is ONLY applicable to intraday intervals (1min, 5min, 15min, 30min, and 60min)
-           for the equity markets. By default, this parameter is not set and the technical indicator values 
-           will be calculated based on the most recent 30 days of intraday data. You can use the month 
-           parameter (in YYYY-MM format) to compute intraday technical indicators for a specific month 
-           in history. For example, month=2009-01.
-    datatype: By default, datatype=csv. Strings json and csv are accepted with the following specifications:
-             json returns the daily time series in JSON format; csv returns the time series as a CSV file.
-
-
-        entitlement: "delayed" for 15-minute delayed data, "realtime" for realtime data
-Returns:
-    The Bollinger bands (BBANDS) values in JSON or CSV format.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            symbol (required, string): The name of the ticker of your choice. For example: symbol=IBM
+            interval (required, string): Time interval between two consecutive data points in the time series.
+            time_period (required, integer): Number of data points used to calculate each BBANDS value. Positive integers are accepted.
+            series_type (required, string): The desired price type in the time series. Four types are supported: close, open, high, low
+            nbdevup (optional, integer): The standard deviation multiplier of the upper band. Positive integers are accepted. By default, nbdevup=2.
+            nbdevdn (optional, integer): The standard deviation multiplier of the lower band. Positive integers are accepted. By default, nbdevdn=2.
+            matype (optional, integer): Moving average type of the time series. By default, matype=0. Integers 0-8 are accepted with the following mappings:
+            month (optional, string): Note: this parameter is ONLY applicable to intraday intervals (1min, 5min, 15min, 30min, and 60min)
+            datatype (optional, string): By default, datatype=csv. Strings json and csv are accepted with the following specifications:
+            entitlement (optional, string): "delayed" for 15-minute delayed data, "realtime" for realtime data
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

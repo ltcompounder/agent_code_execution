@@ -6,20 +6,12 @@ def EARNINGS(params: dict = None) -> dict:
     """
     Returns annual and quarterly earnings (EPS) for the company.
 
-Quarterly data also includes analyst estimates and surprise metrics.
-
-Args:
-    symbol: The symbol of the ticker of your choice. For example: symbol=IBM.
-
-Returns:
-    Earnings data in JSON format or error message.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            symbol (required, string): The symbol of the ticker of your choice. For example: symbol=IBM.
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

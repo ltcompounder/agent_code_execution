@@ -6,24 +6,16 @@ def ANALYTICS_FIXED_WINDOW(params: dict = None) -> dict:
     """
     Returns advanced analytics metrics for time series over a fixed temporal window.
 
-Calculates metrics like total return, variance, auto-correlation, etc.
-
-Args:
-    symbols: Comma-separated list of symbols. Free keys: up to 5, Premium keys: up to 50.
-    range_param: Date range for the series. Defaults to full equity history.
-    interval: Time interval - 1min, 5min, 15min, 30min, 60min, DAILY, WEEKLY, MONTHLY.
-    calculations: Comma-separated list of analytics metrics to calculate.
-    ohlc: OHLC field for calculation - open, high, low, close. Default "close".
-    
-Returns:
-    Dictionary containing analytics data or JSON string.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            symbols (required, string): Comma-separated list of symbols. Free keys: up to 5, Premium keys: up to 50.
+            range_param (required, string): Date range for the series. Defaults to full equity history.
+            interval (required, string): Time interval - 1min, 5min, 15min, 30min, 60min, DAILY, WEEKLY, MONTHLY.
+            calculations (required, string): Comma-separated list of analytics metrics to calculate.
+            ohlc (optional, string): OHLC field for calculation - open, high, low, close. Default "close".
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

@@ -6,15 +6,12 @@ def IPO_CALENDAR(params: dict = None) -> dict:
     """
     Returns a list of IPOs expected in the next 3 months.
 
-Returns:
-    IPO calendar data in CSV format or error message.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            No parameters required
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

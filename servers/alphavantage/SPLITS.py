@@ -6,20 +6,13 @@ def SPLITS(params: dict = None) -> dict:
     """
     Returns historical split events.
 
-Args:
-    symbol: The symbol of the ticker of your choice. For example: symbol=IBM.
-    datatype: By default, datatype=csv. Strings json and csv are accepted.
-             json returns the data in JSON format; csv returns as CSV file.
-
-Returns:
-    Split data in specified format or error message.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            symbol (required, string): The symbol of the ticker of your choice. For example: symbol=IBM.
+            datatype (optional, string): By default, datatype=csv. Strings json and csv are accepted.
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

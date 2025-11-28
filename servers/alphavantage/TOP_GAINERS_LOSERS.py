@@ -6,18 +6,12 @@ def TOP_GAINERS_LOSERS(params: dict = None) -> dict:
     """
     Returns top 20 gainers, losers, and most active traded tickers in the US market.
 
-Args:
-    None.
-    
-Returns:
-    Dictionary containing top gainers/losers data or JSON string.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            No parameters required
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

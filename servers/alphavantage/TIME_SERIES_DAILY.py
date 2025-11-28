@@ -4,26 +4,17 @@ from servers.mcp_client import call_mcp_tool
 
 def TIME_SERIES_DAILY(params: dict = None) -> dict:
     """
-    
-Returns raw daily time series (OHLCV) of the global equity specified, covering 20+ years of historical data.
+    Returns raw daily time series (OHLCV) of the global equity specified, covering 20+ years of historical data.
 
-Args:
-    symbol: The name of the equity. For example: symbol=IBM
-    outputsize: "compact" (100 data points) or "full" (20+ years of historical data)
-    datatype: By default, datatype=csv. Strings json and csv are accepted with the following specifications:
-             json returns the data in JSON format; csv returns the data as a CSV (comma separated value) file.
-
-
-        entitlement: "delayed" for 15-minute delayed data, "realtime" for realtime data
-Returns:
-    Dict or string containing the daily time series data based on datatype parameter.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            symbol (required, string): The name of the equity. For example: symbol=IBM
+            outputsize (optional, string): "compact" (100 data points) or "full" (20+ years of historical data)
+            datatype (optional, string): By default, datatype=csv. Strings json and csv are accepted with the following specifications:
+            entitlement (optional, string): "delayed" for 15-minute delayed data, "realtime" for realtime data
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

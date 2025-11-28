@@ -4,32 +4,18 @@ from servers.mcp_client import call_mcp_tool
 
 def VWAP(params: dict = None) -> dict:
     """
-    
-Returns the volume weighted average price (VWAP) for intraday time series.
+    Returns the volume weighted average price (VWAP) for intraday time series.
 
-Args:
-    symbol: The name of the ticker of your choice. For example: symbol=IBM
-    interval: Time interval between two consecutive data points in the time series.
-             In keeping with mainstream investment literatures on VWAP, the following
-             intraday intervals are supported: 1min, 5min, 15min, 30min, 60min
-    month: By default, this parameter is not set and the technical indicator values will
-          be calculated based on the most recent 30 days of intraday data. You can use the month parameter
-          (in YYYY-MM format) to compute intraday technical indicators for a specific month in history.
-          For example, month=2009-01. Any month equal to or later than 2000-01 (January 2000) is supported.
-    datatype: By default, datatype=csv. Strings json and csv are accepted with the following specifications:
-             json returns the daily time series in JSON format; csv returns the time series as a CSV file.
-
-
-        entitlement: "delayed" for 15-minute delayed data, "realtime" for realtime data
-Returns:
-    The VWAP values in JSON or CSV format.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            symbol (required, string): The name of the ticker of your choice. For example: symbol=IBM
+            interval (required, string): Time interval between two consecutive data points in the time series.
+            month (optional, string): By default, this parameter is not set and the technical indicator values will
+            datatype (optional, string): By default, datatype=csv. Strings json and csv are accepted with the following specifications:
+            entitlement (optional, string): "delayed" for 15-minute delayed data, "realtime" for realtime data
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

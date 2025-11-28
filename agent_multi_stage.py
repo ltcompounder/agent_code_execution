@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-3-Agent MCP Code Execution Pipeline
-Explorer → Reader → Coder
+5-Agent MCP Code Execution Pipeline
+Explorer (Discovery) → Explorer (Selection) → Reader → Coder → Executor → Parser
 """
 
 import os
@@ -35,16 +35,15 @@ client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ============================================================================
-# AGENT 1: EXPLORER (Discovery + Selection)
+# AGENT 1A: EXPLORER - DISCOVERY (Find all available tools)
 # ============================================================================
 
-EXPLORER_PROMPT = """You are a tool explorer agent.
+EXPLORER_DISCOVERY_PROMPT = """You are a tool discovery agent.
 
-Your task: Scan ./servers/alphavantage/ to find all available tools, then select the best one for the user's query.
+Your task: Scan ./servers/alphavantage/ to find all available tools.
 
-User query: {user_query}
+Write and execute code to discover all available tools:
 
-Step 1 - Discover all tools (write and execute this code):
 ```python
 import os
 
@@ -71,7 +70,21 @@ except Exception as e:
     traceback.print_exc()
 ```
 
-Step 2 - After seeing all tools, select the most appropriate one for: "{user_query}"
+Execute this code to discover all available tools.
+"""
+
+# ============================================================================
+# AGENT 1B: EXPLORER - SELECTION (Select best tool for query)
+# ============================================================================
+
+EXPLORER_SELECTION_PROMPT = """You are a tool selection agent.
+
+Your task: Select the most appropriate tool for the user's query from the available tools.
+
+User query: {user_query}
+
+Available tools:
+{available_tools}
 
 SELECTION RULES:
 1. Match keywords in the user query to tool names
@@ -97,7 +110,9 @@ KEYWORD MATCHING PRIORITY:
 2. Specific distinguishing keywords (e.g., "transcript" → must have TRANSCRIPT in name)
 3. General category match
 
-Output format:
+Analyze the user query carefully and select the single most appropriate tool.
+
+Output format (just one line):
 SELECTED_TOOL: [exact tool name]
 """
 
@@ -107,46 +122,32 @@ SELECTED_TOOL: [exact tool name]
 
 READER_PROMPT = """You are a tool reader agent.
 
-Your task: Read the tool file and extract its complete interface.
+Your task: Analyze the tool file content and extract its complete interface.
 
-Tool to read: {tool_name}
+Tool: {tool_name}
 
-Write and execute code to read ./servers/alphavantage/{tool_name}.py
+File content:
+{tool_content}
 
-For example, if the tool is GLOBAL_QUOTE, write:
-```python
-with open('./servers/alphavantage/GLOBAL_QUOTE.py', 'r') as f:
-    content = f.read()
-    print(content)
-```
-
-Now write the code for {tool_name} (use the EXACT tool name in the file path):
-```python
-# Your code here - replace with actual tool name
-```
-
-After reading, carefully analyze the docstring and extract parameters:
+Carefully analyze the docstring and extract parameters:
 
 IMPORTANT: Look for the "Args:" section in the docstring. Parameters are listed like:
-    symbol: Description here
-    quarter: Description here
-    datatype: Description here (optional)
+    symbol (required, string): Description here
+    quarter (required, string): Description here
+    datatype (optional, string): Description here
 
-All parameters in the Args section should be considered REQUIRED unless explicitly marked as "(optional)" or "optional".
+Pay attention to whether each parameter is marked as "required" or "optional".
 
-Extract and output:
+Extract and output in this EXACT format:
 
 TOOL: {tool_name}
 DESCRIPTION: [one-line summary - first line of docstring]
-PARAMETERS: [list ALL parameters from Args section with descriptions]
-Example format:
-  - symbol (REQUIRED): Ticker symbol
-  - quarter (REQUIRED): Fiscal quarter in YYYYQM format
-  - datatype (OPTIONAL): Data format (json/csv)
-
+PARAMETERS:
+  - parameter_name (REQUIRED/OPTIONAL, type): Description with examples
+  - parameter_name (REQUIRED/OPTIONAL, type): Description with examples
 EXAMPLE_CALL: {tool_name}({{"param1": "value1", "param2": "value2"}})
 
-Be thorough - list ALL parameters you find in the Args section.
+Be thorough - list ALL parameters you find in the Args section with their exact descriptions including any format examples.
 """
 
 # ============================================================================
@@ -180,35 +181,87 @@ Generate clean Python code that:
 1. Imports from servers.alphavantage
 2. Calls the tool with parameters in the EXACT format shown in documentation examples
 3. Handles the response appropriately
-4. Prints results in a clear, user-friendly format
+4. Prints the RAW result as JSON (this will be parsed by the Parser Agent)
 
 Guidelines:
 - Wrap code in ```python blocks
 - Use try/except for error handling
-- Extract relevant fields from API response
-- Format output clearly for the user
+- Output MUST be valid JSON that can be parsed
+- Use json.dumps() to ensure clean JSON output
 - Include comments showing parameter format
 
 Example structure:
 ```python
+import json
 from servers.alphavantage import {tool_name}
 
 try:
     # Call the tool with parameters in correct format
     result = {tool_name}({{"param": "value"}})  # Use format from documentation!
 
-    # Extract and display relevant data
-    if result:
-        print("Results:")
-        print(result)
-    else:
-        print("No data returned")
+    # Output raw result as JSON for Parser Agent
+    print(json.dumps(result, indent=2))
 
 except Exception as e:
-    print(f"Error: {{e}}")
+    # Output error as JSON
+    print(json.dumps({{"error": str(e)}}))
 ```
 
 Generate ONLY the code block, minimal explanation.
+"""
+
+# ============================================================================
+# AGENT 4: PARSER (Response Formatting)
+# ============================================================================
+
+PARSER_PROMPT = """You are a response parsing and formatting agent.
+
+Your task: Convert raw API response data into a natural, human-readable answer to the user's query.
+
+User query: {user_query}
+Tool used: {tool_name}
+Raw API response:
+{api_response}
+
+PARSING RULES:
+1. Extract ONLY the information relevant to the user's query
+2. Format the response in clear, natural language
+3. If there's an error, explain it in user-friendly terms
+4. Include relevant numbers, dates, and metrics
+5. Use bullet points or structured format when appropriate
+6. Keep it concise but informative
+
+COMMON SCENARIOS:
+
+Stock Price Queries:
+- Extract: current price, change, volume, timestamp
+- Format: "Tesla (TSLA) is currently trading at $245.67, up $3.45 (+1.43%) with volume of 125.4M shares."
+
+Company Overview:
+- Extract: company name, sector, industry, description, market cap, PE ratio
+- Format key metrics clearly with labels
+
+Historical Data:
+- Show date range, highlight key points (highs, lows, trends)
+- Format dates in readable format (e.g., "January 15, 2025" not "2025-01-15")
+
+Earnings Data:
+- Extract relevant earnings figures, EPS, revenue
+- Show dates and comparisons if available
+
+Error Handling:
+- If API returns an error message, explain what went wrong
+- If data is missing, say "No data available for [query]"
+- If there's a rate limit, suggest trying again later
+
+OUTPUT FORMAT:
+Provide a clear, direct answer. Do NOT include:
+- Technical jargon unless necessary
+- JSON structure explanations
+- API endpoint details
+- Debugging information
+
+Just answer the user's question in plain English.
 """
 
 # ============================================================================
@@ -294,73 +347,124 @@ def execute_python_code(code: str, working_dir: str) -> dict:
 
 
 # ============================================================================
-# 3-AGENT PIPELINE
+# 5-AGENT PIPELINE
 # ============================================================================
 
 def run_pipeline(user_query: str):
-    """Run the 3-agent pipeline: Explorer → Reader → Coder"""
+    """Run the 5-agent pipeline: Explorer → Reader → Coder → Executor → Parser"""
 
     print("\n" + "="*70)
-    print("3-AGENT PIPELINE: Explorer → Reader → Coder")
+    print("5-AGENT PIPELINE: Explorer → Reader → Coder → Executor → Parser")
     print("="*70)
 
     # ========================================================================
-    # STAGE 1: EXPLORER (Discover + Select)
+    # STAGE 1A: EXPLORER - DISCOVERY
     # ========================================================================
-    print("\n[1/3] 🔍 EXPLORER AGENT - Discovering and selecting tool...")
+    print("\n[1a/4] 🔍 EXPLORER AGENT (Discovery) - Finding all available tools...")
     print("-"*70)
 
-    explorer_prompt = EXPLORER_PROMPT.format(user_query=user_query)
-    explorer_response = call_agent(explorer_prompt)
+    discovery_response = call_agent(EXPLORER_DISCOVERY_PROMPT)
 
     # Execute discovery code
-    code_blocks = extract_python_code(explorer_response)
+    code_blocks = extract_python_code(discovery_response)
+    available_tools_list = []
+
     if code_blocks:
         result = execute_python_code(code_blocks[0], WORKING_DIR)
         if result["success"]:
             print(result["stdout"])
+            # Parse the tool list from stdout
+            for line in result["stdout"].split('\n'):
+                if line.strip().startswith('- '):
+                    tool_name = line.strip()[2:].strip()
+                    available_tools_list.append(tool_name)
+        else:
+            print("❌ Discovery failed:")
+            print(result["stderr"])
+            return
+    else:
+        print("❌ No discovery code generated")
+        return
+
+    if not available_tools_list:
+        print("❌ No tools discovered")
+        return
+
+    # ========================================================================
+    # STAGE 1B: EXPLORER - SELECTION
+    # ========================================================================
+    print(f"\n[1b/4] 🎯 EXPLORER AGENT (Selection) - Choosing best tool for query...")
+    print("-"*70)
+
+    # Format the tools list for the selection prompt
+    tools_formatted = "\n".join([f"  - {tool}" for tool in available_tools_list])
+
+    selection_prompt = EXPLORER_SELECTION_PROMPT.format(
+        user_query=user_query,
+        available_tools=tools_formatted
+    )
+    selection_response = call_agent(selection_prompt)
 
     # Extract selected tool
     selected_tool = None
-    for line in explorer_response.split('\n'):
+    for line in selection_response.split('\n'):
         if line.startswith('SELECTED_TOOL:'):
             selected_tool = line.replace('SELECTED_TOOL:', '').strip()
             break
 
     if not selected_tool:
         print("❌ Explorer failed to select a tool")
-        print("Response:", explorer_response)
+        print("Response:", selection_response)
         return
 
-    print(f"\n✓ Selected: {selected_tool}")
+    print(f"✓ Selected: {selected_tool}")
 
     # ========================================================================
     # STAGE 2: READER (Understand Tool)
     # ========================================================================
-    print(f"\n[2/3] 📖 READER AGENT - Reading {selected_tool}.py...")
+    print(f"\n[2/4] 📖 READER AGENT - Reading {selected_tool}.py...")
     print("-"*70)
 
-    reader_prompt = READER_PROMPT.format(tool_name=selected_tool)
+    # Read the tool file directly
+    tool_file_path = os.path.join(WORKING_DIR, "servers", "alphavantage", f"{selected_tool}.py")
+
+    try:
+        with open(tool_file_path, 'r') as f:
+            tool_content = f.read()
+        print(f"✓ Read {len(tool_content)} characters from {selected_tool}.py")
+    except FileNotFoundError:
+        print(f"❌ Tool file not found: {tool_file_path}")
+        return
+    except Exception as e:
+        print(f"❌ Error reading tool file: {e}")
+        return
+
+    # Now call the reader agent with the actual file content
+    reader_prompt = READER_PROMPT.format(
+        tool_name=selected_tool,
+        tool_content=tool_content
+    )
     reader_response = call_agent(reader_prompt)
 
-    # Execute file reading code
-    code_blocks = extract_python_code(reader_response)
-    if code_blocks:
-        result = execute_python_code(code_blocks[0], WORKING_DIR)
-        if result["success"]:
-            print(f"✓ Read {len(result['stdout'])} characters")
-
-    # Extract interface summary
+    # Extract and display interface summary
     print("\nTool Interface:")
     interface_start = reader_response.find("TOOL:")
     if interface_start >= 0:
-        interface_summary = reader_response[interface_start:interface_start+500]
-        print(interface_summary.split('\n\n')[0])  # First paragraph only
+        # Display the full interface extraction
+        interface_end = reader_response.find("EXAMPLE_CALL:")
+        if interface_end >= 0:
+            interface_end = reader_response.find("\n", interface_end + 100)  # Include example call
+            if interface_end < 0:
+                interface_end = len(reader_response)
+        else:
+            interface_end = len(reader_response)
+        interface_summary = reader_response[interface_start:interface_end]
+        print(interface_summary)
 
     # ========================================================================
     # STAGE 3: CODER (Generate Code)
     # ========================================================================
-    print(f"\n[3/3] 💻 CODER AGENT - Generating executable code...")
+    print(f"\n[3/4] 💻 CODER AGENT - Generating executable code...")
     print("-"*70)
 
     coder_prompt = CODER_PROMPT.format(
@@ -376,20 +480,41 @@ def run_pipeline(user_query: str):
         print(code_blocks[0])
 
     # ========================================================================
-    # EXECUTE GENERATED CODE
+    # STAGE 4: EXECUTE GENERATED CODE
     # ========================================================================
     if code_blocks:
-        print("\n" + "="*70)
-        print("⚡ EXECUTING CODE...")
+        print("\n[4/5] ⚡ EXECUTING CODE...")
         print("="*70 + "\n")
 
         result = execute_python_code(code_blocks[0], WORKING_DIR)
 
         if result["success"]:
+            print("Raw API Response:")
             print(result["stdout"])
+            api_response = result["stdout"]
         else:
             print("❌ Execution failed:")
             print(result["stderr"])
+            api_response = result["stderr"]
+
+        # ====================================================================
+        # STAGE 5: PARSER (Format Response)
+        # ====================================================================
+        print(f"\n[5/5] 📝 PARSER AGENT - Formatting response...")
+        print("-"*70 + "\n")
+
+        parser_prompt = PARSER_PROMPT.format(
+            user_query=user_query,
+            tool_name=selected_tool,
+            api_response=api_response
+        )
+        parser_response = call_agent(parser_prompt)
+
+        print("="*70)
+        print("FINAL ANSWER")
+        print("="*70)
+        print(parser_response)
+        print("="*70)
     else:
         print("\n❌ No code generated")
 
@@ -401,12 +526,15 @@ def run_pipeline(user_query: str):
 def main():
     """Main CLI loop."""
     print("="*70)
-    print("Multi-Agent Alpha Vantage Assistant (3-Agent Architecture)")
+    print("Multi-Agent Alpha Vantage Assistant (5-Agent Architecture)")
     print("="*70)
     print("\n🏗️  Pipeline Architecture:")
-    print("  1. 🔍 EXPLORER - Scans filesystem + selects best tool")
-    print("  2. 📖 READER   - Reads tool file + extracts interface")
-    print("  3. 💻 CODER    - Generates executable code")
+    print("  1a. 🔍 EXPLORER (Discovery) - Scans filesystem for all tools")
+    print("  1b. 🎯 EXPLORER (Selection) - Selects best tool from discovered list")
+    print("  2.  📖 READER              - Reads tool file + extracts interface")
+    print("  3.  💻 CODER               - Generates executable code")
+    print("  4.  ⚡ EXECUTOR             - Runs generated code")
+    print("  5.  📝 PARSER              - Formats response into natural language")
     print("\n" + "="*70)
     print("\nCommands:")
     print("  Type your query and press Enter")
@@ -429,7 +557,7 @@ def main():
                 print("\n👋 Goodbye!")
                 break
 
-            # Run the 3-agent pipeline
+            # Run the 5-agent pipeline
             run_pipeline(user_input)
 
         except KeyboardInterrupt:

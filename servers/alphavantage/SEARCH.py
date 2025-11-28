@@ -4,22 +4,14 @@ from servers.mcp_client import call_mcp_tool
 
 def SEARCH(params: dict = None) -> dict:
     """
-    
-Search for relevant Alpha Vantage data based on natural language query.
+    Search for relevant Alpha Vantage data based on natural language query.
 
-Args:
-    query: Natural language search query (e.g., "AAPL stock price daily", "Tesla earnings data")
-
-Returns:
-    Dictionary with 'results' key containing list of relevant data sources.
-    Each result includes id, title, text snippet describing the data, and url.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            query (required, string): Natural language search query (e.g., "AAPL stock price daily", "Tesla earnings data")
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

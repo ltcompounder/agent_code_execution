@@ -6,25 +6,13 @@ def LISTING_STATUS(params: dict = None) -> dict:
     """
     Returns a list of active or delisted US stocks and ETFs.
 
-Can return data as of the latest trading day or at a specific time in history.
-Facilitates equity research on asset lifecycle and survivorship.
-
-Args:
-    date: If no date is set, returns symbols as of the latest trading day.
-         If set, "travels back" to return symbols on that date in history.
-         Any YYYY-MM-DD date later than 2010-01-01 is supported. For example: date=2013-08-03
-    state: By default, state=active returns actively traded stocks and ETFs.
-          Set state=delisted to query delisted assets.
-
-Returns:
-    Listing status data in CSV format or error message.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            date (optional, string): If no date is set, returns symbols as of the latest trading day.
+            state (optional, string): By default, state=active returns actively traded stocks and ETFs.
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

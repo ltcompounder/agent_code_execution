@@ -4,22 +4,14 @@ from servers.mcp_client import call_mcp_tool
 
 def RETAIL_SALES(params: dict = None) -> dict:
     """
-    
-This API returns the monthly Advance Retail Sales: Retail Trade data of the United States.
+    This API returns the monthly Advance Retail Sales: Retail Trade data of the United States.
 
-Args:
-    datatype: By default, datatype=csv. Strings json and csv are accepted with the following specifications: 
-              json returns the time series in JSON format; csv returns the time series as a CSV (comma separated value) file.
-
-Returns:
-    Retail sales time series data in JSON format or CSV string.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            datatype (optional, string): By default, datatype=csv. Strings json and csv are accepted with the following specifications:
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

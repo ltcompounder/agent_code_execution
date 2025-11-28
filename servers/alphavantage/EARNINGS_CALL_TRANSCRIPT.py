@@ -6,21 +6,13 @@ def EARNINGS_CALL_TRANSCRIPT(params: dict = None) -> dict:
     """
     Returns earnings call transcript for a company in a specific quarter.
 
-Covers 15+ years of history enriched with LLM-based sentiment signals.
-
-Args:
-    symbol: Ticker symbol. Example: "IBM".
-    quarter: Fiscal quarter in YYYYQM format. Example: "2024Q1". Supports quarters since 2010Q1.
-    
-Returns:
-    Dictionary containing earnings call transcript data or JSON string.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            symbol (required, string): Ticker symbol. Example: "IBM".
+            quarter (required, string): Fiscal quarter in YYYYQM format. Example: "2024Q1". Supports quarters since 2010Q1.
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}

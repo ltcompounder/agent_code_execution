@@ -17,61 +17,76 @@ except ImportError:
     print("Warning: python-dotenv not installed. Using system environment variables.")
 
 try:
-    from mcp import ClientSession, StdioServerParameters
-    from mcp.client.stdio import stdio_client
+    import httpx
 except ImportError:
-    print("Error: MCP package not installed")
-    print("Install with: pip install mcp")
+    print("Error: httpx package not installed")
+    print("Install with: pip install httpx")
     sys.exit(1)
 
 # Get API key from environment
 ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY')
 
-# Server configuration - using uvx to run av-mcp locally
-SERVER_PARAMS = StdioServerParameters(
-    command="uvx",
-    args=["av-mcp", ALPHA_VANTAGE_API_KEY or ""],
-    env=None
-)
+# Server configuration - using HTTPS endpoint
+BASE_URL = "https://mcp.alphavantage.co"
 
 
 async def list_tools_async():
     """List all available tools from the Alpha Vantage MCP server."""
     if not ALPHA_VANTAGE_API_KEY:
         raise ValueError("ALPHA_VANTAGE_API_KEY environment variable not set")
-    
+
     if ALPHA_VANTAGE_API_KEY == "your-alpha-vantage-key-here":
         raise ValueError("Please replace placeholder with your actual Alpha Vantage API key in .env file")
-    
+
     try:
-        # Connect via stdio (local server run by uvx)
-        async with stdio_client(SERVER_PARAMS) as (read, write):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-                response = await session.list_tools()
-                
-                # Convert to list of dicts for easier handling
-                tools = []
-                for tool in response.tools:
-                    tool_dict = {
-                        "name": tool.name,
-                        "description": tool.description,
-                    }
-                    if hasattr(tool, 'inputSchema'):
-                        tool_dict["inputSchema"] = tool.inputSchema
-                    tools.append(tool_dict)
-                
-                return tools
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Make JSON-RPC request to list tools
+            payload = {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/list",
+                "params": {}
+            }
+
+            response = await client.post(
+                f"{BASE_URL}/mcp",
+                json=payload,
+                params={"apikey": ALPHA_VANTAGE_API_KEY},
+                headers={"Content-Type": "application/json"}
+            )
+            response.raise_for_status()
+
+            result = response.json()
+
+            if "error" in result:
+                raise ValueError(f"MCP Error: {result['error']}")
+
+            # Extract tools from result
+            tools_data = result.get("result", {}).get("tools", [])
+
+            # Convert to list of dicts for easier handling
+            tools = []
+            for tool in tools_data:
+                tool_dict = {
+                    "name": tool.get("name"),
+                    "description": tool.get("description"),
+                }
+                if "inputSchema" in tool:
+                    tool_dict["inputSchema"] = tool["inputSchema"]
+                tools.append(tool_dict)
+
+            return tools
+
     except Exception as e:
         import traceback
         print(f"\nError connecting to Alpha Vantage MCP server:")
-        print(f"Command: uvx av-mcp [API_KEY]")
+        print(f"Server URL: {BASE_URL}")
         print(f"Error type: {type(e).__name__}")
         print(f"Error message: {str(e)}")
         print(f"\nMake sure:")
-        print("  1. You have Python 3.13+ installed")
-        print("  2. uv is installed: curl -LsSf https://astral.sh/uv/install.sh | sh")
-        print("  3. Your API key is valid")
+        print("  1. Your API key is valid")
+        print("  2. You have network connectivity")
+        print("  3. The MCP server is accessible")
         print(f"\nFull traceback:")
         traceback.print_exc()
         raise
@@ -81,36 +96,62 @@ async def call_tool_async(tool_name: str, arguments: dict):
     """Call a specific MCP tool with given arguments."""
     if not ALPHA_VANTAGE_API_KEY:
         raise ValueError("ALPHA_VANTAGE_API_KEY environment variable not set")
-    
+
     try:
-        # Connect via stdio (local server)
-        async with stdio_client(SERVER_PARAMS) as (read, write):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-                response = await session.call_tool(tool_name, arguments)
-                
-                # Extract content from response
-                if hasattr(response, 'content'):
-                    # MCP response has content array
-                    results = []
-                    for content in response.content:
-                        if hasattr(content, 'text'):
-                            results.append(content.text)
-                        elif hasattr(content, 'data'):
-                            results.append(content.data)
-                    
-                    if len(results) == 1:
-                        # Try to parse as JSON if it's a string
-                        if isinstance(results[0], str):
-                            try:
-                                return json.loads(results[0])
-                            except json.JSONDecodeError:
-                                return results[0]
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Make JSON-RPC request to call tool
+            payload = {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {
+                    "name": tool_name,
+                    "arguments": arguments
+                }
+            }
+
+            response = await client.post(
+                f"{BASE_URL}/mcp",
+                json=payload,
+                params={"apikey": ALPHA_VANTAGE_API_KEY},
+                headers={"Content-Type": "application/json"}
+            )
+            response.raise_for_status()
+
+            result = response.json()
+
+            if "error" in result:
+                return {
+                    "error": result["error"].get("message", str(result["error"])),
+                    "tool": tool_name,
+                    "arguments": arguments
+                }
+
+            # Extract content from result
+            content_list = result.get("result", {}).get("content", [])
+
+            if not content_list:
+                return result.get("result", {})
+
+            # Process content array
+            results = []
+            for content in content_list:
+                if "text" in content:
+                    results.append(content["text"])
+                elif "data" in content:
+                    results.append(content["data"])
+
+            if len(results) == 1:
+                # Try to parse as JSON if it's a string
+                if isinstance(results[0], str):
+                    try:
+                        return json.loads(results[0])
+                    except json.JSONDecodeError:
                         return results[0]
-                    return results
-                
-                return response
-                
+                return results[0]
+
+            return results if results else result.get("result", {})
+
     except Exception as e:
         return {
             "error": str(e),

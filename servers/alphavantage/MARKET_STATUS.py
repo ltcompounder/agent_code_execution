@@ -4,18 +4,14 @@ from servers.mcp_client import call_mcp_tool
 
 def MARKET_STATUS(params: dict = None) -> dict:
     """
-    
-Returns the current market status (open vs. closed) of major trading venues worldwide.
+    Returns the current market status (open vs. closed) of major trading venues worldwide.
 
-Returns:
-    Dict containing current market status information.
-
-    
     Args:
-        params: Dictionary containing the tool parameters (default: empty dict)
-        
+        params (dict, optional): Dictionary containing the following parameters:
+            entitlement (optional, string): "delayed" for 15-minute delayed data, "realtime" for realtime data
+
     Returns:
-        Response from Alpha Vantage MCP server
+        dict: API response containing the requested data or error information
     """
     if params is None:
         params = {}
