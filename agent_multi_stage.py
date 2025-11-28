@@ -25,11 +25,11 @@ except ImportError:
 
 # Initialize Anthropic client
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-if not ANTHROPIC_API_KEY:
+if not ANTHROPIC_API_KEY and __name__ == "__main__":
     print("Error: ANTHROPIC_API_KEY not set in .env file")
     sys.exit(1)
 
-client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 
 # Working directory
 WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -353,6 +353,14 @@ def execute_python_code(code: str, working_dir: str) -> dict:
 def run_pipeline(user_query: str):
     """Run the 5-agent pipeline: Explorer → Reader → Coder → Executor → Parser"""
 
+    # Initialize client if not already done (when imported as module)
+    global client
+    if client is None:
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ValueError("ANTHROPIC_API_KEY not set")
+        client = anthropic.Anthropic(api_key=api_key)
+
     print("\n" + "="*70)
     print("5-AGENT PIPELINE: Explorer → Reader → Coder → Executor → Parser")
     print("="*70)
@@ -381,14 +389,14 @@ def run_pipeline(user_query: str):
         else:
             print("❌ Discovery failed:")
             print(result["stderr"])
-            return
+            return {"success": False, "answer": "Tool discovery failed", "tool_used": None, "generated_code": None, "raw_api_response": None}
     else:
         print("❌ No discovery code generated")
-        return
+        return {"success": False, "answer": "Tool discovery failed", "tool_used": None, "generated_code": None, "raw_api_response": None}
 
     if not available_tools_list:
         print("❌ No tools discovered")
-        return
+        return {"success": False, "answer": "No tools discovered", "tool_used": None, "generated_code": None, "raw_api_response": None}
 
     # ========================================================================
     # STAGE 1B: EXPLORER - SELECTION
@@ -415,7 +423,7 @@ def run_pipeline(user_query: str):
     if not selected_tool:
         print("❌ Explorer failed to select a tool")
         print("Response:", selection_response)
-        return
+        return {"success": False, "answer": "Failed to select appropriate tool", "tool_used": None, "generated_code": None, "raw_api_response": None}
 
     print(f"✓ Selected: {selected_tool}")
 
@@ -434,10 +442,10 @@ def run_pipeline(user_query: str):
         print(f"✓ Read {len(tool_content)} characters from {selected_tool}.py")
     except FileNotFoundError:
         print(f"❌ Tool file not found: {tool_file_path}")
-        return
+        return {"success": False, "answer": f"Tool file not found: {selected_tool}", "tool_used": selected_tool, "generated_code": None, "raw_api_response": None}
     except Exception as e:
         print(f"❌ Error reading tool file: {e}")
-        return
+        return {"success": False, "answer": f"Error reading tool file: {e}", "tool_used": selected_tool, "generated_code": None, "raw_api_response": None}
 
     # Now call the reader agent with the actual file content
     reader_prompt = READER_PROMPT.format(
@@ -515,8 +523,24 @@ def run_pipeline(user_query: str):
         print("="*70)
         print(parser_response)
         print("="*70)
+
+        # Return structured response for API usage
+        return {
+            "success": True,
+            "answer": parser_response,
+            "tool_used": selected_tool,
+            "generated_code": code_blocks[0] if code_blocks else None,
+            "raw_api_response": api_response
+        }
     else:
         print("\n❌ No code generated")
+        return {
+            "success": False,
+            "answer": "Failed to generate code",
+            "tool_used": selected_tool if 'selected_tool' in locals() else None,
+            "generated_code": None,
+            "raw_api_response": None
+        }
 
 
 # ============================================================================
