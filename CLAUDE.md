@@ -22,9 +22,20 @@ python servers/generate_tools.py
 ```
 
 ### Running the Agent
+
+**CLI Mode:**
 ```bash
-# Run the multi-agent pipeline
+# Run the multi-agent pipeline (interactive CLI)
 python agent_multi_stage.py
+```
+
+**API Mode:**
+```bash
+# Start the FastAPI server
+python api.py
+
+# Or with uvicorn directly
+uvicorn api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### Testing MCP Connection
@@ -34,6 +45,31 @@ python servers/mcp_client.py
 
 # Test individual tool
 python -c 'from servers.alphavantage import GLOBAL_QUOTE; import json; print(json.dumps(GLOBAL_QUOTE({"symbol": "NVDA"}), indent=2))'
+```
+
+### Using the REST API
+
+The system can be accessed via REST API endpoints:
+
+```bash
+# Start the API server
+python api.py
+
+# Query via curl
+curl -X POST http://localhost:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is the current price of Tesla?"}'
+
+# Query with debug information
+curl -X POST http://localhost:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is the current price of Tesla?", "include_debug": true}'
+
+# Health check
+curl http://localhost:8000/health
+
+# Access interactive API docs
+# Visit http://localhost:8000/docs
 ```
 
 ## Architecture
@@ -80,6 +116,27 @@ Generates Python wrapper files for each MCP tool:
 - Each tool file imports `call_mcp_tool()` from `mcp_client.py`
 - Generates `__init__.py` for package imports
 - Creates categorized README.md
+
+### REST API
+
+**File**: `api.py`
+
+FastAPI application that exposes the 5-agent pipeline via REST endpoints:
+
+**Key Endpoints:**
+- `POST /query` - Process a financial data query through the pipeline
+  - Request body: `{"query": "...", "include_debug": false}`
+  - Returns: `{"success": true, "answer": "...", "tool_used": "...", "debug_info": {...}}`
+- `GET /health` - Health check showing API key configuration status
+- `GET /` - API information and available endpoints
+- `GET /docs` - Interactive Swagger UI documentation
+
+**Implementation Details:**
+- Captures stdout from `run_pipeline()` to extract results
+- Parses pipeline output to extract final answer and selected tool
+- Optional debug mode includes full pipeline output, generated code, and raw API responses
+- Uses Pydantic models for request/response validation
+- CORS enabled for cross-origin requests
 
 ### Tool Structure
 
