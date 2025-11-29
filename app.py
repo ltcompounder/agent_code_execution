@@ -217,7 +217,7 @@ if __name__ == "__main__":
     print("\n" + "="*70)
 
     uvicorn.run(
-        "api:app",
+        "app:app",
         host="0.0.0.0",
         port=8000,
         reload=True,
