@@ -40,7 +40,7 @@ WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
 
 EXPLORER_DISCOVERY_PROMPT = """You are a tool discovery agent.
 
-Your task: Scan ./servers/alphavantage/ to find all available tools.
+Your task: Scan the alphavantage tools directory to find all available tools.
 
 Write and execute code to discover all available tools:
 
@@ -48,7 +48,9 @@ Write and execute code to discover all available tools:
 import os
 
 try:
-    tools_dir = './servers/alphavantage'
+    # Use absolute path based on this file's location (works in serverless environments)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    tools_dir = os.path.join(script_dir, 'servers', 'alphavantage')
 
     # List all files
     all_files = os.listdir(tools_dir)
@@ -433,7 +435,7 @@ def run_pipeline(user_query: str):
     print(f"\n[2/4] 📖 READER AGENT - Reading {selected_tool}.py...")
     print("-"*70)
 
-    # Read the tool file directly
+    # Read the tool file directly using absolute path
     tool_file_path = os.path.join(WORKING_DIR, "servers", "alphavantage", f"{selected_tool}.py")
 
     try:
