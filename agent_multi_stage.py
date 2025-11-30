@@ -391,7 +391,7 @@ def run_pipeline(user_query: str):
         else:
             print("❌ Discovery failed:")
             print(result["stderr"])
-            return {"success": False, "answer": "Tool discovery failed", "tool_used": None, "generated_code": None, "raw_api_response": None}
+            return {"success": False, "answer": result["stderr"], "tool_used": None, "generated_code": None, "raw_api_response": None}
     else:
         print("❌ No discovery code generated")
         return {"success": False, "answer": "No discovery code generated", "tool_used": None, "generated_code": None, "raw_api_response": None}
